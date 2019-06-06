@@ -31,7 +31,7 @@ import (
 // Config holds the Blockchain integration configuration.
 type Config struct {
 	ListenPort     int    `mapstructure:"ListenPort"`
-	DialConnection string `mapstructure:"DialConnectiom"`
+	DialConnection string `mapstructure:"DialConnection`
 	Seed           int64  `mapstructure:"Seed"`
 	Difficulty     string `mapstructure:"Difficulty"`
 }
@@ -134,7 +134,7 @@ func (i *Integration) SendDataUp(pl integration.DataUpPayload) error {
 	log.WithFields(log.Fields{
 		"dev_eui": pl.DevEUI,
 	}).Info("integration/blockchain: publishing data-up payload")
-	data, err := json.Marshal(pl)
+	data, err := json.Marshal(pl.Data)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -145,8 +145,8 @@ func (i *Integration) SendDataUp(pl integration.DataUpPayload) error {
 func (i *Integration) SendJoinNotification(pl integration.JoinNotification) error {
 	log.WithFields(log.Fields{
 		"dev_eui": pl.DevEUI,
-	}).Info("integration/blockchain: publishing data-up payload")
-	data, err := json.Marshal(pl)
+	}).Info("integration/blockchain: publishing data-join payload")
+	data, err := json.Marshal(pl.DevEUI)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -157,8 +157,8 @@ func (i *Integration) SendJoinNotification(pl integration.JoinNotification) erro
 func (i *Integration) SendACKNotification(pl integration.ACKNotification) error {
 	log.WithFields(log.Fields{
 		"dev_eui": pl.DevEUI,
-	}).Info("integration/blockchain: publishing data-up payload")
-	data, err := json.Marshal(pl)
+	}).Info("integration/blockchain: publishing data-ack payload")
+	data, err := json.Marshal(pl.DevEUI)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -169,8 +169,8 @@ func (i *Integration) SendACKNotification(pl integration.ACKNotification) error 
 func (i *Integration) SendErrorNotification(pl integration.ErrorNotification) error {
 	log.WithFields(log.Fields{
 		"dev_eui": pl.DevEUI,
-	}).Info("integration/blockchain: publishing data-up payload")
-	data, err := json.Marshal(pl)
+	}).Info("integration/blockchain: publishing data-error payload")
+	data, err := json.Marshal(pl.ApplicationID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -179,7 +179,7 @@ func (i *Integration) SendErrorNotification(pl integration.ErrorNotification) er
 
 // SendStatusNotification sends a status notification.
 func (i *Integration) SendStatusNotification(pl integration.StatusNotification) error {
-	data, err := json.Marshal(pl)
+	data, err := json.Marshal(pl.Battery)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -190,8 +190,8 @@ func (i *Integration) SendStatusNotification(pl integration.StatusNotification) 
 func (i *Integration) SendLocationNotification(pl integration.LocationNotification) error {
 	log.WithFields(log.Fields{
 		"dev_eui": pl.DevEUI,
-	}).Info("integration/blockchain: publishing data-up payload")
-	data, err := json.Marshal(pl)
+	}).Info("integration/blockchain: publishing data-location payload")
+	data, err := json.Marshal(pl.DevEUI)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -220,6 +220,7 @@ func calcHash(block Block) string {
 }
 
 func (i *Integration) publish(data []byte) error {
+	log.Println("publishing block")
 	i.Channel <- data
 	return nil
 }
@@ -384,9 +385,12 @@ func (i *Integration) writeData(rw *bufio.ReadWriter) {
 		}
 
 		if isValid(i, i.Blockchain[len(i.Blockchain)-1], newBlock) {
+			log.Println("Block is valid")
 			i.mutex.Lock()
 			i.Blockchain = append(i.Blockchain, newBlock)
 			i.mutex.Unlock()
+		} else {
+			log.Println("BLock isnt valid, didnt add anything")
 		}
 
 		bytes, err := json.Marshal(i.Blockchain)

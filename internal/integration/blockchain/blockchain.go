@@ -31,7 +31,7 @@ import (
 // Config holds the Blockchain integration configuration.
 type Config struct {
 	ListenPort     int    `mapstructure:"ListenPort"`
-	DialConnection string `mapstructure:"DialConnection`
+	DialConnection string `mapstructure:"DialConnection"`
 	Seed           int64  `mapstructure:"Seed"`
 	Difficulty     string `mapstructure:"Difficulty"`
 }
@@ -65,6 +65,14 @@ func New(conf Config) (*Integration, error) {
 
 func (i *Integration) Running(conf Config) {
 	go func() {
+		t := time.Now()
+		genesisBlock := Block{0, t.String(), []byte("Genesis bruh"), 0, "", "", ""}
+		genesisBlock.Difficulty = i.Difficulty
+		genesisBlock.Hash = calcHash(genesisBlock)
+		genesisBlock = proofOfWork(i, genesisBlock)
+		spew.Dump(genesisBlock)
+		i.Blockchain = append(i.Blockchain, genesisBlock)
+
 		listenF := conf.ListenPort
 		target := conf.DialConnection
 		seed := conf.Seed
@@ -134,10 +142,7 @@ func (i *Integration) SendDataUp(pl integration.DataUpPayload) error {
 	log.WithFields(log.Fields{
 		"dev_eui": pl.DevEUI,
 	}).Info("integration/blockchain: publishing data-up payload")
-	data, err := json.Marshal(pl.Data)
-	if err != nil {
-		log.Fatal(err)
-	}
+	data := pl.Data
 	return i.publish(data)
 }
 
@@ -237,9 +242,9 @@ func generateBlock(i *Integration, prevBlock Block, data []byte) (Block, error) 
 	newBlock.PrevHash = prevBlock.Hash
 	newBlock.Difficulty = i.Difficulty
 	newBlock.Hash = calcHash(newBlock)
-	fmt.Println("Generating Proof")
+	log.Println("Generating Proof")
 	newBlock = proofOfWork(i, newBlock)
-	fmt.Println("Returning Block")
+	log.Println("Returning Block")
 	return newBlock, nil
 }
 
@@ -379,6 +384,7 @@ func (i *Integration) writeData(rw *bufio.ReadWriter) {
 
 	for {
 		data := <-i.Channel
+		log.Println("Retrieved Data from lora")
 		newBlock, err := generateBlock(i, i.Blockchain[len(i.Blockchain)-1], data)
 		if err != nil {
 			log.Fatal(err)

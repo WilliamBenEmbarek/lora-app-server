@@ -73,6 +73,8 @@ func (i *Integration) Running(conf Config) {
 		spew.Dump(genesisBlock)
 		i.Blockchain = append(i.Blockchain, genesisBlock)
 
+		i.Channel = make(chan []byte)
+
 		listenF := conf.ListenPort
 		target := conf.DialConnection
 		seed := conf.Seed

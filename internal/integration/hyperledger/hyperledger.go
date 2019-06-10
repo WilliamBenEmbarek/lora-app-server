@@ -23,14 +23,8 @@ import (
 	"github.com/hyperledger/sawtooth-sdk-go/signing"
 )
 
-// Integration implements the blockchain integration.
+// Integration implements the Hyperledger integration.
 type Integration struct {
-	mutex      sync.Mutex
-	Difficulty string
-	Channel    chan []byte
-}
-
-type IntkeyClient struct {
 	url    string
 	signer *signing.Signer
 }
@@ -49,13 +43,12 @@ func Sha512HashValue(value string) string {
 	return strings.ToLower(hex.EncodeToString(hashHandler.Sum(nil)))
 }
 
-func GetClient(conf Config) (IntkeyClient, error) {
-
+func New(conf Config) (*Integration, error) {
 	keyfile, err := GetKeyfile(conf.keyfile)
 	if err != nil {
-		return IntkeyClient{}, err
+		return Integration{}, err
 	}
-	return NewIntkeyClient(conf.url, keyfile)
+	return NewIntegration(conf.url, keyfile) 
 }
 
 func GetKeyfile(keyfile string) (string, error) {
@@ -71,14 +64,14 @@ func GetKeyfile(keyfile string) (string, error) {
 	}
 }
 
-func NewIntkeyClient(url string, keyfile string) (IntkeyClient, error) {
+func NewIntegration(url string, keyfile string) (*Integration, error) {
 
 	var privateKey signing.PrivateKey
 	if keyfile != "" {
 		// Read private key file
 		privateKeyStr, err := ioutil.ReadFile(keyfile)
 		if err != nil {
-			return IntkeyClient{},
+			return Integration{},
 				errors.New(fmt.Sprintf("Failed to read private key: %v", err))
 		}
 		// Get private key object
@@ -88,10 +81,10 @@ func NewIntkeyClient(url string, keyfile string) (IntkeyClient, error) {
 	}
 	cryptoFactory := signing.NewCryptoFactory(signing.NewSecp256k1Context())
 	signer := cryptoFactory.NewSigner(privateKey)
-	return IntkeyClient{url, signer}, nil
+	return &Integration{url, signer}, nil
 }
 
-func (intkeyClient IntkeyClient) sendRequest(
+func (i *Integration) sendRequest(
 	apiSuffix string,
 	data []byte,
 	contentType string,
@@ -99,10 +92,10 @@ func (intkeyClient IntkeyClient) sendRequest(
 
 	// Construct URL
 	var url string
-	if strings.HasPrefix(intkeyClient.url, "http://") {
-		url = fmt.Sprintf("%s/%s", intkeyClient.url, apiSuffix)
+	if strings.HasPrefix(i.url, "http://") {
+		url = fmt.Sprintf("%s/%s", i.url, apiSuffix)
 	} else {
-		url = fmt.Sprintf("http://%s/%s", intkeyClient.url, apiSuffix)
+		url = fmt.Sprintf("http://%s/%s", i.url, apiSuffix)
 	}
 
 	// Send request to validator URL
@@ -132,7 +125,89 @@ func (intkeyClient IntkeyClient) sendRequest(
 	return string(reponseBody), nil
 }
 
-func (intkeyClient IntkeyClient) sendTransaction(
+
+// SendDataUp sends an uplink data payload.
+func (i *Integration) SendDataUp(pl integration.DataUpPayload) error {
+	log.WithFields(log.Fields{
+		"dev_eui": pl.DevEUI,
+	}).Info("integration/blockchain: publishing data-up payload")
+	data := pl.Data
+	return i.publish(pl.DevEUI,pl.Data)
+}
+
+// SendJoinNotification sends a join notification.
+func (i *Integration) SendJoinNotification(pl integration.JoinNotification) error {
+	log.WithFields(log.Fields{
+		"dev_eui": pl.DevEUI,
+	}).Info("integration/blockchain: publishing data-join payload")
+	data, err := json.Marshal(pl.DevEUI)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return i.publish(pl.DevEUI,pl.Data)
+}
+
+// SendACKNotification sends an ack notification.
+func (i *Integration) SendACKNotification(pl integration.ACKNotification) error {
+	log.WithFields(log.Fields{
+		"dev_eui": pl.DevEUI,
+	}).Info("integration/blockchain: publishing data-ack payload")
+	data, err := json.Marshal(pl.DevEUI)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return i.publish(pl.DevEUI,pl.Data)
+}
+
+// SendErrorNotification sends an error notification.
+func (i *Integration) SendErrorNotification(pl integration.ErrorNotification) error {
+	log.WithFields(log.Fields{
+		"dev_eui": pl.DevEUI,
+	}).Info("integration/blockchain: publishing data-error payload")
+	data, err := json.Marshal(pl.ApplicationID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return i.publish(pl.DevEUI,pl.Data)
+}
+
+// SendStatusNotification sends a status notification.
+func (i *Integration) SendStatusNotification(pl integration.StatusNotification) error {
+	data, err := json.Marshal(pl.Battery)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return i.publish(pl.DevEUI,pl.Data)
+}
+
+// SendLocationNotification sends a location notification.
+func (i *Integration) SendLocationNotification(pl integration.LocationNotification) error {
+	log.WithFields(log.Fields{
+		"dev_eui": pl.DevEUI,
+	}).Info("integration/blockchain: publishing data-location payload")
+	data, err := json.Marshal(pl.DevEUI)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return i.publish(pl.DevEUI,pl.Data)
+}
+
+// DataDownChan return nil.
+func (i *Integration) DataDownChan() chan integration.DataDownPayload {
+	return nil
+}
+
+// Close closes the integration.
+func (i *Integration) Close() error {
+	return nil
+}
+
+
+func (i *Integration) publish(data []byte, deveui string) {
+	i.sendTransaction(VERB_SET, deveui, data, 5)
+}
+
+func (i *Integration) sendTransaction(
 	verb string, name string, value []byte, wait uint) (string, error) {
 
 	// construct the payload information in CBOR format
@@ -146,16 +221,16 @@ func (intkeyClient IntkeyClient) sendTransaction(
 	}
 
 	// construct the address
-	address := intkeyClient.getAddress(name)
+	address := i.getAddress(name)
 
 	// Construct TransactionHeader
 	rawTransactionHeader := transaction_pb2.TransactionHeader{
-		SignerPublicKey:  intkeyClient.signer.GetPublicKey().AsHex(),
+		SignerPublicKey:  i.signer.GetPublicKey().AsHex(),
 		FamilyName:       FAMILY_NAME,
 		FamilyVersion:    FAMILY_VERSION,
 		Dependencies:     []string{}, // empty dependency list
 		Nonce:            strconv.Itoa(rand.Int()),
-		BatcherPublicKey: intkeyClient.signer.GetPublicKey().AsHex(),
+		BatcherPublicKey: i.signer.GetPublicKey().AsHex(),
 		Inputs:           []string{address},
 		Outputs:          []string{address},
 		PayloadSha512:    Sha512HashValue(string(payload)),
@@ -168,7 +243,7 @@ func (intkeyClient IntkeyClient) sendTransaction(
 
 	// Signature of TransactionHeader
 	transactionHeaderSignature := hex.EncodeToString(
-		intkeyClient.signer.Sign(transactionHeader))
+		i.signer.Sign(transactionHeader))
 
 	// Construct Transaction
 	transaction := transaction_pb2.Transaction{
@@ -178,7 +253,7 @@ func (intkeyClient IntkeyClient) sendTransaction(
 	}
 
 	// Get BatchList
-	rawBatchList, err := intkeyClient.createBatchList(
+	rawBatchList, err := i.createBatchList(
 		[]*transaction_pb2.Transaction{&transaction})
 	if err != nil {
 		return "", errors.New(
@@ -194,13 +269,13 @@ func (intkeyClient IntkeyClient) sendTransaction(
 	if wait > 0 {
 		waitTime := uint(0)
 		startTime := time.Now()
-		response, err := intkeyClient.sendRequest(
+		response, err := i.sendRequest(
 			BATCH_SUBMIT_API, batchList, CONTENT_TYPE_OCTET_STREAM, name)
 		if err != nil {
 			return "", err
 		}
 		for waitTime < wait {
-			status, err := intkeyClient.getStatus(batchId, wait-waitTime)
+			status, err := i.getStatus(batchId, wait-waitTime)
 			if err != nil {
 				return "", err
 			}
@@ -212,21 +287,21 @@ func (intkeyClient IntkeyClient) sendTransaction(
 		return response, nil
 	}
 
-	return intkeyClient.sendRequest(
+	return Integration.sendRequest(
 		BATCH_SUBMIT_API, batchList, CONTENT_TYPE_OCTET_STREAM, name)
 }
 
-func (intkeyClient IntkeyClient) getPrefix() string {
+func (i *Integration) getPrefix() string {
 	return Sha512HashValue(FAMILY_NAME)[:FAMILY_NAMESPACE_ADDRESS_LENGTH]
 }
 
-func (intkeyClient IntkeyClient) getAddress(name string) string {
-	prefix := intkeyClient.getPrefix()
+func (i *Integration) getAddress(name string) string {
+	prefix := i.getPrefix()
 	nameAddress := Sha512HashValue(name)[FAMILY_VERB_ADDRESS_LENGTH:]
 	return prefix + nameAddress
 }
 
-func (intkeyClient IntkeyClient) createBatchList(
+func (i *Integration) createBatchList(
 	transactions []*transaction_pb2.Transaction) (batch_pb2.BatchList, error) {
 
 	// Get list of TransactionHeader signatures
@@ -238,7 +313,7 @@ func (intkeyClient IntkeyClient) createBatchList(
 
 	// Construct BatchHeader
 	rawBatchHeader := batch_pb2.BatchHeader{
-		SignerPublicKey: intkeyClient.signer.GetPublicKey().AsHex(),
+		SignerPublicKey: i.signer.GetPublicKey().AsHex(),
 		TransactionIds:  transactionSignatures,
 	}
 	batchHeader, err := proto.Marshal(&rawBatchHeader)
@@ -249,7 +324,7 @@ func (intkeyClient IntkeyClient) createBatchList(
 
 	// Signature of BatchHeader
 	batchHeaderSignature := hex.EncodeToString(
-		intkeyClient.signer.Sign(batchHeader))
+		i.signer.Sign(batchHeader))
 
 	// Construct Batch
 	batch := batch_pb2.Batch{

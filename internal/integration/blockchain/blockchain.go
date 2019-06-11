@@ -289,9 +289,7 @@ func proofOfWork(i *Integration, newBlock Block) Block {
 	fmt.Println("Working")
 	for !(strings.HasPrefix(newBlock.Hash, i.Difficulty)) {
 		newBlock.Nonce = newBlock.Nonce + 1
-		fmt.Println(fmt.Sprintf("Nonce didn't work, trying nonce value of : %d", newBlock.Nonce))
 		newBlock.Hash = calcHash(newBlock)
-		fmt.Println(newBlock.Hash)
 	}
 	return newBlock
 }

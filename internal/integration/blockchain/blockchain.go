@@ -243,7 +243,6 @@ func generateBlock(i *Integration, prevBlock Block, data []byte) (Block, error) 
 	newBlock.Nonce = 0
 	newBlock.PrevHash = prevBlock.Hash
 	newBlock.Difficulty = i.Difficulty
-	newBlock.Hash = calcHash(newBlock)
 	log.Println("Generating Proof")
 	newBlock = proofOfWork(i, newBlock)
 	log.Println("Returning Block")
@@ -264,11 +263,15 @@ func isValid(i *Integration, prevBlock Block, newBlock Block) bool {
 		return false
 	}
 
-	if calcHash(newBlock) != newBlock.Hash {
-		log.Println("Hash of the new block is wrong")
+	if proofOfWork(newBlock).Hash != newBlock.Hash {
+		fmt.Println("calced Hash is", calcHash(newBlock))
+		spew.Dump(json.Marshal(newBlock))
 		spew.Dump(newBlock)
+		fmt.Println(newBlock.Hash)
+		log.Fatal("New Hash wrong")
 		return false
 	}
+
 	if !strings.HasPrefix(newBlock.Hash, i.Difficulty) {
 		log.Println("Difficulty was wrong")
 		spew.Dump(newBlock)

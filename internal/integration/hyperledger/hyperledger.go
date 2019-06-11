@@ -33,8 +33,6 @@ type Integration struct {
 type Config struct {
 	url        string `mapstructure:"url"`
 	keyfile    string `mapstructure:"keyfile"`
-	Seed       int64  `mapstructure:"Seed"`
-	Difficulty string `mapstructure:"Difficulty"`
 }
 
 func Sha512HashValue(value string) string {

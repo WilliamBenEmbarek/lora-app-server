@@ -15,7 +15,7 @@
  * ------------------------------------------------------------------------------
  */
 
-package main
+package hyperledger
 
 const (
 	// String literals

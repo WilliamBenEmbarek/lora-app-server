@@ -124,6 +124,12 @@ id="{{ .ApplicationServer.ID }}"
   DialConnection = "{{ .ApplicationServer.Integration.Blockchain.DialConnection }}"
   Seed = "{{ .ApplicationServer.Integration.Blockchain.Seed }}"
   Difficulty = "{{ .ApplicationServer.Integration.Blockchain.Difficulty }}"
+
+  [application_server.integration.hyperledger]
+  url = "{{ .ApplicationServer.Integration.Hyperledger.url }}"
+  keyfile = "{{ .ApplicationServer.Integration.Hyperledger.keyfile }}"
+
+
   # MQTT integration backend.
   [application_server.integration.mqtt]
   # MQTT topic templates for the different MQTT topics.

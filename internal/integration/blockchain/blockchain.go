@@ -144,7 +144,10 @@ func (i *Integration) SendDataUp(pl integration.DataUpPayload) error {
 	log.WithFields(log.Fields{
 		"dev_eui": pl.DevEUI,
 	}).Info("integration/blockchain: publishing data-up payload")
-	data := pl.Data
+	data, err := pl.Object.(*[]byte)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return i.publish(data)
 }
 
@@ -243,9 +246,12 @@ func generateBlock(i *Integration, prevBlock Block, data []byte) (Block, error) 
 	newBlock.Nonce = 0
 	newBlock.PrevHash = prevBlock.Hash
 	newBlock.Difficulty = i.Difficulty
-	log.Println("Generating Proof")
-	newBlock = proofOfWork(i, newBlock)
-	log.Println("Returning Block")
+	newBlock.Hash = calcHash(newBlock)
+	fmt.Println("Generating Proof")
+	newBlock = proofOfWork(newBlock)
+	fmt.Println("Returning Block")
+	spew.Dump(json.Marshal(newBlock))
+	spew.Dump(newBlock)
 	return newBlock, nil
 }
 

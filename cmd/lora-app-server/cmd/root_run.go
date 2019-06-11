@@ -106,6 +106,8 @@ func setupIntegration() error {
 			confs = append(confs, config.C.ApplicationServer.Integration.GCPPubSub)
 		case "blockchain":
 			confs = append(confs, config.C.ApplicationServer.Integration.Blockchain)
+		case "hyperledger":
+			confs = append(confs, config.C.ApplicationServer.Integration.Hyperledger)
 		default:
 			return fmt.Errorf("unknown integration type: %s", name)
 		}

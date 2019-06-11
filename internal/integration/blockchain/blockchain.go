@@ -243,7 +243,6 @@ func generateBlock(i *Integration, prevBlock Block, data []byte) (Block, error) 
 	newBlock.Nonce = 0
 	newBlock.PrevHash = prevBlock.Hash
 	newBlock.Difficulty = i.Difficulty
-	newBlock.Hash = calcHash(newBlock)
 	log.Println("Generating Proof")
 	newBlock = proofOfWork(i, newBlock)
 	log.Println("Returning Block")

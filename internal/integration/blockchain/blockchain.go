@@ -253,17 +253,25 @@ func generateBlock(i *Integration, prevBlock Block, data []byte) (Block, error) 
 func isValid(i *Integration, prevBlock Block, newBlock Block) bool {
 
 	if prevBlock.Index+1 != newBlock.Index {
+		log.Println("Index was wrong :(")
+		spew.Dump(newBlock)
 		return false
 	}
 
 	if prevBlock.Hash != newBlock.PrevHash {
+		log.Println("Hashes were wrong")
+		spew.Dump(newBlock)
 		return false
 	}
 
 	if calcHash(newBlock) != newBlock.Hash {
+		log.Println("Hash of the new block is wrong")
+		spew.Dump(newBlock)
 		return false
 	}
 	if !strings.HasPrefix(newBlock.Hash, i.Difficulty) {
+		log.Println("Difficulty was wrong")
+		spew.Dump(newBlock)
 		return false
 	}
 
@@ -387,7 +395,9 @@ func (i *Integration) writeData(rw *bufio.ReadWriter) {
 	for {
 		data := <-i.Channel
 		log.Println("Retrieved Data from lora")
+		i.mutex.Lock()
 		newBlock, err := generateBlock(i, i.Blockchain[len(i.Blockchain)-1], data)
+		i.mutex.Unlock()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -398,7 +408,7 @@ func (i *Integration) writeData(rw *bufio.ReadWriter) {
 			i.Blockchain = append(i.Blockchain, newBlock)
 			i.mutex.Unlock()
 		} else {
-			log.Println("BLock isnt valid, didnt add anything")
+			log.Println("Block isnt valid, didnt add anything")
 		}
 
 		bytes, err := json.Marshal(i.Blockchain)

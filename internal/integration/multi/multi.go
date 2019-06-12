@@ -12,9 +12,10 @@ import (
 	"github.com/brocaar/lora-app-server/internal/integration/awssns"
 	"github.com/brocaar/lora-app-server/internal/integration/azureservicebus"
 	"github.com/brocaar/lora-app-server/internal/integration/blockchain"
+	"github.com/brocaar/lora-app-server/internal/integration/hyperledger"
 	"github.com/brocaar/lora-app-server/internal/integration/gcppubsub"
 	"github.com/brocaar/lora-app-server/internal/integration/http"
-
+	
 	"github.com/brocaar/lora-app-server/internal/integration/influxdb"
 	"github.com/brocaar/lora-app-server/internal/integration/mqtt"
 	"github.com/brocaar/lora-app-server/internal/storage"
@@ -51,8 +52,8 @@ func New(confs []interface{}) (*Integration, error) {
 			ii, err = mqtt.New(storage.RedisPool(), v)
 		case blockchain.Config:
 			ii, err = blockchain.New(v)
-		// case hyperledger.Config:
-		//	ii, err = hyperledger.New(v)
+		case hyperledger.Config:
+			ii, err = hyperledger.New(v)
 		default:
 			return nil, fmt.Errorf("unknown configuration type %T", conf)
 		}

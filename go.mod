@@ -24,6 +24,7 @@ require (
 	github.com/gorilla/mux v1.7.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/grpc-ecosystem/grpc-gateway v1.8.5
+	github.com/hyperledger/sawtooth-sdk-go v0.1.1
 	github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/jteeuwen/go-bindata v3.0.8-0.20180305030458-6025e8de665b+incompatible

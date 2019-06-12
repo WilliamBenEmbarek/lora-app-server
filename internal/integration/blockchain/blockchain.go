@@ -66,7 +66,7 @@ func New(conf Config) (*Integration, error) {
 func (i *Integration) Running(conf Config) {
 	go func() {
 		t := time.Now()
-		genesisBlock := Block{0, t.String(), []byte("Genesis bruh"), 0, "", "", ""}
+		genesisBlock := Block{0, t.String(), []byte("Genesis Block!"), 0, "", "", ""}
 		genesisBlock.Difficulty = i.Difficulty
 		genesisBlock.Hash = calcHash(genesisBlock)
 		genesisBlock = proofOfWork(i, genesisBlock)
@@ -145,10 +145,10 @@ func (i *Integration) SendDataUp(pl integration.DataUpPayload) error {
 		"dev_eui": pl.DevEUI,
 	}).Info("integration/blockchain: publishing data-up payload")
 	data, err := pl.Object.(*[]byte)
-	if err != nil {
+	if err != false {
 		log.Fatal(err)
 	}
-	return i.publish(data)
+	return i.publish(*data)
 }
 
 // SendJoinNotification sends a join notification.
@@ -248,7 +248,7 @@ func generateBlock(i *Integration, prevBlock Block, data []byte) (Block, error) 
 	newBlock.Difficulty = i.Difficulty
 	newBlock.Hash = calcHash(newBlock)
 	fmt.Println("Generating Proof")
-	newBlock = proofOfWork(newBlock)
+	newBlock = proofOfWork(i, newBlock)
 	fmt.Println("Returning Block")
 	spew.Dump(json.Marshal(newBlock))
 	spew.Dump(newBlock)
@@ -269,7 +269,7 @@ func isValid(i *Integration, prevBlock Block, newBlock Block) bool {
 		return false
 	}
 
-	if proofOfWork(newBlock).Hash != newBlock.Hash {
+	if proofOfWork(i,newBlock).Hash != newBlock.Hash {
 		fmt.Println("calced Hash is", calcHash(newBlock))
 		spew.Dump(json.Marshal(newBlock))
 		spew.Dump(newBlock)

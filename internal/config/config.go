@@ -7,7 +7,7 @@ import (
 	"github.com/brocaar/lora-app-server/internal/integration/azureservicebus"
 	"github.com/brocaar/lora-app-server/internal/integration/blockchain"
 	"github.com/brocaar/lora-app-server/internal/integration/gcppubsub"
-
+	"github.com/brocaar/lora-app-server/internal/integration/hyperledger"
 	"github.com/brocaar/lora-app-server/internal/integration/mqtt"
 )
 
@@ -46,7 +46,7 @@ type Config struct {
 			MQTT            mqtt.Config            `mapstructure:"mqtt"`
 			GCPPubSub       gcppubsub.Config       `mapstructure:"gcp_pub_sub"`
 			Blockchain      blockchain.Config      `mapstructure:"blockchain"`
-			//Hyperledger     hyperledger.Config    
+			Hyperledger     hyperledger.Config     `mapstructure:"hyperledger"`
 		}
 
 		API struct {

@@ -125,10 +125,6 @@ id="{{ .ApplicationServer.ID }}"
   Seed = "{{ .ApplicationServer.Integration.Blockchain.Seed }}"
   Difficulty = "{{ .ApplicationServer.Integration.Blockchain.Difficulty }}"
 
-  [application_server.integration.hyperledger]
-  url = "{{ .ApplicationServer.Integration.Hyperledger.url }}"
-  keyfile = "{{ .ApplicationServer.Integration.Hyperledger.keyfile }}"
-
 
   # MQTT integration backend.
   [application_server.integration.mqtt]

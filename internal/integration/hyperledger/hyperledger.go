@@ -91,8 +91,7 @@ func (i *Integration) sendRequest(
 	apiSuffix string,
 	data []byte,
 	contentType string,
-	name string) (string, error),
-	url2 string {
+	name string) (string, error){
 	log.Println("got this far 8")
 	// Construct URL
 	var url string

@@ -36,6 +36,7 @@ type Config struct {
 	Difficulty     string `mapstructure:"Difficulty"`
 }
 
+//A block in the blockchain
 type Block struct {
 	Index      int
 	Timestamp  string
@@ -62,7 +63,7 @@ func New(conf Config) (*Integration, error) {
 	go i.Running(conf)
 	return &i, nil
 }
-
+//The main method that runs the integration
 func (i *Integration) Running(conf Config) {
 	go func() {
 		t := time.Now()
@@ -152,9 +153,8 @@ func (i *Integration) SendDataUp(pl integration.DataUpPayload) error {
 			log.Fatal(err)
 		}
 		return i.publish(data)
-	} else {
-		return i.publish(*data)
 	}
+	return i.publish(*data)
 }
 
 // SendJoinNotification sends a join notification.

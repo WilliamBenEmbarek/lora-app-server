@@ -146,9 +146,15 @@ func (i *Integration) SendDataUp(pl integration.DataUpPayload) error {
 	}).Info("integration/blockchain: publishing data-up payload")
 	data, err := pl.Object.(*[]byte)
 	if err != false {
-		log.Fatal(err)
+		log.Println(err)
+		data, err := json.Marshal(pl)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return i.publish(data)
+	} else {
+		return i.publish(*data)
 	}
-	return i.publish(*data)
 }
 
 // SendJoinNotification sends a join notification.

@@ -91,15 +91,16 @@ func (i *Integration) sendRequest(
 	apiSuffix string,
 	data []byte,
 	contentType string,
-	name string) (string, error) {
+	name string) (string, error),
+	url2 string {
 	log.Println("got this far 8")
 	// Construct URL
 	var url string
 	log.Printf("I.url = %s",i.url)
 	if strings.HasPrefix(i.url, "http://") {
-		url = fmt.Sprintf("%s/%s", i.url, apiSuffix)
+		url = fmt.Sprintf("%s/%s", "http://rest-api:8008", apiSuffix)
 	} else {
-		url = fmt.Sprintf("http://%s/%s", i.url, apiSuffix)
+		url = fmt.Sprintf("http://%s/%s", "rest-api:8008", apiSuffix)
 	}
 
 	// Send request to validator URL
@@ -110,12 +111,13 @@ func (i *Integration) sendRequest(
 	} else {
 		response, err = http.Get(url)
 	}
+	log.Printf("url is %s",url)
 	if err != nil {
 			log.Fatal("Failed to connect to REST API: %v", err)
 	}
 	log.Println("got this far 9")
 	if response.StatusCode == 404 {
-		log.Fatal(errors.New(fmt.Sprintf("No such key: %s", name)
+		log.Fatal(fmt.Sprintf("No such key: %s", name))
 	} else if response.StatusCode >= 400 {
 			log.Fatal("Error %d: %s", response.StatusCode, response.Status)
 	}

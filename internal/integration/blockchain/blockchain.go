@@ -146,8 +146,9 @@ func (i *Integration) SendDataUp(pl integration.DataUpPayload) error {
 		"dev_eui": pl.DevEUI,
 	}).Info("integration/blockchain: publishing data-up payload")
 	data, err := pl.Object.(*[]byte)
-	if err != false {
+	if err != true {
 		log.Println(err)
+		log.Println(data)
 		data, err := json.Marshal(pl)
 		if err != nil {
 			log.Fatal(err)

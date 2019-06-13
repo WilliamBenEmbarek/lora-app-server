@@ -51,7 +51,8 @@ func New(conf Config) (*Integration, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return NewIntegration(conf.url, keyfile)
+	url := conf.url
+	return NewIntegration(url, keyfile)
 }
 
 func GetKeyfile(keyfile string) (string, error) {
@@ -94,6 +95,7 @@ func (i *Integration) sendRequest(
 	log.Println("got this far 8")
 	// Construct URL
 	var url string
+	log.Printf("I.url = %s",i.url)
 	if strings.HasPrefix(i.url, "http://") {
 		url = fmt.Sprintf("%s/%s", i.url, apiSuffix)
 	} else {
@@ -109,24 +111,21 @@ func (i *Integration) sendRequest(
 		response, err = http.Get(url)
 	}
 	if err != nil {
-		return "", errors.New(
-			fmt.Sprintf("Failed to connect to REST API: %v", err))
+			log.Fatal("Failed to connect to REST API: %v", err)
 	}
 	log.Println("got this far 9")
 	if response.StatusCode == 404 {
-		log.Debug(fmt.Sprintf("%v", response))
-		return "", errors.New(fmt.Sprintf("No such key: %s", name))
+		log.Fatal(errors.New(fmt.Sprintf("No such key: %s", name)
 	} else if response.StatusCode >= 400 {
-		return "", errors.New(
-			fmt.Sprintf("Error %d: %s", response.StatusCode, response.Status))
+			log.Fatal("Error %d: %s", response.StatusCode, response.Status)
 	}
 	log.Println("got this far 10")
 	defer response.Body.Close()
 	reponseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("Error reading response: %v", err))
+		log.Fatal("Error reading response: %v", err)
 	}
-	log.Println("got this far 11")
+	log.Println("got this far 9")
 	return string(reponseBody), nil
 }
 

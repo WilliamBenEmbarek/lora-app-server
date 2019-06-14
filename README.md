@@ -1,4 +1,8 @@
-# LoRa App Server
+# LoRa App Server with custom integrations
+
+## Custom Integrations
+This fork of the lora-app-server features two custom integrations, one for connecting to a modified hyperledger intkey transaction processor, and another for connecting to a custom blockchain proof of concept implementation.
+
 
 [![Build Status](https://travis-ci.org/brocaar/lora-app-server.svg?branch=master)](https://travis-ci.org/brocaar/lora-app-server)
 

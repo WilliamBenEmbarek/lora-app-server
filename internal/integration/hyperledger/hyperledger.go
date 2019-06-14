@@ -92,10 +92,8 @@ func (i *Integration) sendRequest(
 	data []byte,
 	contentType string,
 	name string) (string, error){
-	log.Println("got this far 8")
 	// Construct URL
 	var url string
-	log.Printf("I.url = %s",i.url)
 	if strings.HasPrefix(i.url, "http://") {
 		url = fmt.Sprintf("%s/%s", "http://rest-api:8008", apiSuffix)
 	} else {
@@ -110,23 +108,19 @@ func (i *Integration) sendRequest(
 	} else {
 		response, err = http.Get(url)
 	}
-	log.Printf("url is %s",url)
 	if err != nil {
 			log.Fatal("Failed to connect to REST API: %v", err)
 	}
-	log.Println("got this far 9")
 	if response.StatusCode == 404 {
 		log.Fatal(fmt.Sprintf("No such key: %s", name))
 	} else if response.StatusCode >= 400 {
 			log.Fatal("Error %d: %s", response.StatusCode, response.Status)
 	}
-	log.Println("got this far 10")
 	defer response.Body.Close()
 	reponseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		log.Fatal("Error reading response: %v", err)
 	}
-	log.Println("got this far 9")
 	return string(reponseBody), nil
 }
 
@@ -136,7 +130,7 @@ func (i *Integration) SendDataUp(pl integration.DataUpPayload) error {
 		"dev_eui": pl.DevEUI,
 	}).Info("integration/hyperledger: publishing data-up payload")
 	data, err := json.Marshal(pl)
-	if err != false {
+	if err != nil {
 		log.Fatal(err)
 	}
 	return i.publish(data, i.deviceName)
@@ -211,7 +205,6 @@ func (i *Integration) Close() error {
 
 func (i *Integration) publish(data []byte, deveui string) error{
 	i.sendTransaction(VERB_SET, deveui, data, 5)
-	log.Println("got this far 2")
 	return nil
 }
 
@@ -223,7 +216,6 @@ func (i *Integration) sendTransaction(
 	payloadData["Name"] = name
 	payloadData["Value"] = value
 	payload, err := cbor.Dumps(payloadData)
-	log.Println("got this far 3")
 	if err != nil {
 		return "", errors.New(fmt.Sprintf("Failed to construct CBOR: %v", err))
 	}
@@ -248,7 +240,6 @@ func (i *Integration) sendTransaction(
 		return "", errors.New(
 			fmt.Sprintf("Unable to serialize transaction header: %v", err))
 	}
-	log.Println("got this far 4")
 	// Signature of TransactionHeader
 	transactionHeaderSignature := hex.EncodeToString(
 		i.signer.Sign(transactionHeader))
@@ -259,7 +250,6 @@ func (i *Integration) sendTransaction(
 		HeaderSignature: transactionHeaderSignature,
 		Payload:         []byte(payload),
 	}
-	log.Println("got this far 5")
 	// Get BatchList
 	rawBatchList, err := i.createBatchList(
 		[]*transaction_pb2.Transaction{&transaction})
@@ -273,7 +263,6 @@ func (i *Integration) sendTransaction(
 		return "", errors.New(
 			fmt.Sprintf("Unable to serialize batch list: %v", err))
 	}
-	log.Println("got this far 6")
 	if wait > 0 {
 		waitTime := uint(0)
 		startTime := time.Now()
@@ -294,7 +283,6 @@ func (i *Integration) sendTransaction(
 		}
 		return response, nil
 	}
-	log.Println("got this far 7")
 	return i.sendRequest(
 		BATCH_SUBMIT_API, batchList, CONTENT_TYPE_OCTET_STREAM, name)
 }
